@@ -5,7 +5,8 @@ import heroImage from "../public/images/appointment_hero.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
-
+// Replace the existing import
+import { getFreshRecommendations } from "../services/recommendationService";
 const Appointment = () => {
   const router = useRouter();
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
@@ -125,6 +126,49 @@ const fetchBookedSlots = async (date: string) => {
     return alternatives;
   };
 
+
+
+
+
+
+
+// Replace the existing recommendation state and useEffect
+const [recommendations, setRecommendations] = useState<Recommendation | null>(null);
+const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+const [recommendationError, setRecommendationError] = useState('');
+
+// Fetch fresh recommendations on component mount and after bookings
+const fetchRecommendations = async () => {
+  const userEmail = sessionStorage.getItem("userEmail");
+  if (!userEmail) return;
+  
+  setLoadingRecommendations(true);
+  setRecommendationError('');
+  try {
+    const freshRecs = await getFreshRecommendations(userEmail);
+    setRecommendations(freshRecs);
+  } catch (error) {
+    setRecommendationError('Could not load recommendations');
+    console.error("Error fetching recommendations:", error);
+  } finally {
+    setLoadingRecommendations(false);
+  }
+};
+
+useEffect(() => {
+  fetchRecommendations();
+}, []);
+
+
+
+
+
+
+
+
+
+
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -183,7 +227,7 @@ const fetchBookedSlots = async (date: string) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Check if user is logged in
     const userEmail = sessionStorage.getItem("userEmail");
     if (!userEmail) {
@@ -191,13 +235,13 @@ const fetchBookedSlots = async (date: string) => {
       router.push("/login");
       return;
     }
-
+  
     // Validate selections
     if (!selectedVehicle || !selectedPlan || !formData.timeSlot) {
       toast.error("Please select a vehicle type, pricing plan, and time slot.");
       return;
     }
-
+  
     // Double-check slot availability
     if (formData.date && bookedSlots.includes(formData.timeSlot)) {
       const alternatives = findAlternativeSlots(formData.timeSlot);
@@ -224,54 +268,94 @@ const fetchBookedSlots = async (date: string) => {
       );
       return;
     }
-
+  
     setIsSubmitting(true);
     setResponseMessage("");
-
+  
     try {
-      const response = await fetch('/api', {  // Changed from '/api/appointments' to '/api'
+      // Submit booking data
+      const response = await fetch('/api', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          email: sessionStorage.getItem("userEmail"),
+          email: userEmail,
           selectedVehicle,
           selectedPlan,
           extraFeatures
         })
       });
-
-      if (response.ok) {
-        toast.success("Booking confirmed!");
-        // Reset form
-        setFormData({
-          name: "",
-          phone: "",
-          vehicleMake: "",
-          vehicleName: "",
-          vehicleModel: "",
-          date: "",
-          timeSlot: "",
-          comment: "",
-        });
-        setSelectedVehicle(null);
-        setSelectedPlan(null);
-        setExtraFeatures([]);
-        // Refresh booked slots
-        if (formData.date) {
-          await fetchBookedSlots(formData.date);
-        }
-      } else {
+  
+      if (!response.ok) {
         const errorData = await response.json();
-        toast.error(errorData.message || "Unable to confirm booking");
+        throw new Error(errorData.message || "Unable to confirm booking");
       }
+  
+      // On successful booking:
+      toast.success("Booking confirmed!");
+  
+      // Refresh recommendations with fresh data from GROQ
+      try {
+        setLoadingRecommendations(true);
+        const freshRecs = await getFreshRecommendations(userEmail);
+        setRecommendations(freshRecs);
+      } catch (recError) {
+        console.error("Failed to refresh recommendations:", recError);
+        toast.info("Booking confirmed! Could not refresh recommendations.");
+      }
+  
+      // Reset form
+      setFormData({
+        name: "",
+        phone: "",
+        vehicleMake: "",
+        vehicleName: "",
+        vehicleModel: "",
+        date: "",
+        timeSlot: "",
+        comment: "",
+      });
+      setSelectedVehicle(null);
+      setSelectedPlan(null);
+      setExtraFeatures([]);
+  
+      // Refresh booked slots if date was selected
+      if (formData.date) {
+        await fetchBookedSlots(formData.date);
+      }
+  
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error occurred while submitting the form.");
+      console.error("Booking error:", error);
+      toast.error(error instanceof Error ? error.message : "Error occurred while submitting the form.");
     } finally {
       setIsSubmitting(false);
+      setLoadingRecommendations(false);
     }
   };
+
+
+
+
+  const applyRecommendation = () => {
+    if (!recommendations || !selectedVehicle) return;
+  
+    // Convert recommendation to actual prices
+    const prices = pricingOptions[selectedVehicle].prices;
+    let priceToSelect = prices[1]; // Default to Full Wash
+  
+    if (recommendations.recommendedPlan.includes("General") && prices[2]) {
+      priceToSelect = prices[2];
+    } else if (recommendations.recommendedPlan.includes("Basic") && prices[0]) {
+      priceToSelect = prices[0];
+    }
+  
+    setSelectedPlan(priceToSelect.toString());
+    setExtraFeatures(recommendations.recommendedFeatures);
+    
+    toast.success(`Applied: ${recommendations.recommendedPlan} with ${recommendations.recommendedFeatures.join(', ')}`);
+  };
+
+
 
   return (
     <div className="py-8 px-4 md:px-16">
@@ -460,6 +544,51 @@ const fetchBookedSlots = async (date: string) => {
             onChange={handleInputChange}
             className="p-2 border rounded-md w-full text-sm md:text-base"
           />
+
+
+
+
+
+{/* Replace the existing recommendations section */}
+<div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
+  <h2 className="text-xl font-bold mb-2">Recommended For You</h2>
+  
+  {loadingRecommendations ? (
+    <p>Analyzing your booking history...</p>
+  ) : recommendationError ? (
+    <p className="text-red-500">{recommendationError}</p>
+  ) : recommendations ? (
+    <>
+      <p className="mb-3">{recommendations.explanation}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+        <div>
+          <h3 className="font-semibold">Recommended Plan:</h3>
+          <p>{recommendations.recommendedPlan}</p>
+        </div>
+        <div>
+          <h3 className="font-semibold">Recommended Features:</h3>
+          <ul className="list-disc pl-5">
+            {recommendations.recommendedFeatures.map((feature, i) => (
+              <li key={i}>{feature}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <button
+        onClick={applyRecommendation}
+        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+      >
+        Apply Recommendations
+      </button>
+    </>
+  ) : (
+    <p>No recommendations available</p>
+  )}
+</div>
+
+
+
+
           <button
             type="submit"
             className={`w-full bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 ${
