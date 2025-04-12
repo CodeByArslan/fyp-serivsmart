@@ -1,16 +1,23 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import heroImage from "../public/images/appointment_hero.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation"; // Import useRouter for redirection
 import { getFreshRecommendations } from "../services/recommendationService";
 
+type Recommendation = {
+  recommendedPlan: string;
+  recommendedFeatures: string[];
+  explanation: string;
+};
+
 const Appointment = () => {
-  const router = useRouter(); // Initialize useRouter
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [extraFeatures, setExtraFeatures] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -58,101 +65,110 @@ const Appointment = () => {
     },
   };
 
-// Generate all possible time slots (8AM - 8PM)
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let hour = 8; hour <= 20; hour++) {
-    const period = hour < 12 ? "AM" : "PM";
-    const displayHour = hour > 12 ? hour - 12 : hour;
-    slots.push(`${displayHour}:00 ${period}`);
-    slots.push(`${displayHour}:30 ${period}`);
-  }
-  return slots;
-};
+  //Generate all possible time slots (8AM - 8PM)
 
-const allTimeSlots = generateTimeSlots();
 
-// Fetch booked slots when date changes
-useEffect(() => {
-  if (formData.date) {
-    fetchBookedSlots(formData.date);
-  } else {
-    setBookedSlots([]);
-  }
-}, [formData.date]);
-
-// Change all API calls to use '/api' instead of '/api/appointments'
-const fetchBookedSlots = async (date: string) => {
-  setIsLoadingSlots(true);
-  try {
-    const response = await fetch(`/api?date=${date}`);
-    if (!response.ok) throw new Error('Failed to fetch slots');
-    const data = await response.json();
-    setBookedSlots(data.bookedSlots || []);
-  } catch (error) {
-    toast.error("Error checking availability");
-    console.error(error);
-  } finally {
-    setIsLoadingSlots(false);
-  }
-};
-
-// Filter available slots
-const getAvailableSlots = () => {
-  if (!formData.date) return allTimeSlots;
-  return allTimeSlots.filter(slot => !bookedSlots.includes(slot));
-};
-
-const availableSlots = getAvailableSlots();
-
-// Find alternative slots when a slot is booked
-const findAlternativeSlots = (bookedSlot: string) => {
-  const bookedIndex = allTimeSlots.indexOf(bookedSlot);
-  const alternatives = [];
-
-  // Check next 3 available slots
-  for (let i = bookedIndex + 1; i < allTimeSlots.length && alternatives.length < 3; i++) {
-    if (availableSlots.includes(allTimeSlots[i])) {
-      alternatives.push(allTimeSlots[i]);
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 8; hour <= 20; hour++) {
+      const period = hour < 12 ? "AM" : "PM";
+      const displayHour = hour > 12 ? hour - 12 : hour;
+      slots.push(`${displayHour}:00 ${period}`);
+      slots.push(`${displayHour}:30 ${period}`);
     }
-  }
+    return slots;
+  };
 
-  // If not enough, check previous slots
-  for (let i = bookedIndex - 1; i >= 0 && alternatives.length < 3; i--) {
-    if (availableSlots.includes(allTimeSlots[i])) {
-      alternatives.unshift(allTimeSlots[i]);
+  const timeSlots = generateTimeSlots();
+  const allTimeSlots = generateTimeSlots();
+
+  // Fetch booked slots when date changes
+  useEffect(() => {
+    if (formData.date) {
+      fetchBookedSlots(formData.date);
+    } else {
+      setBookedSlots([]);
     }
-  }
+  }, [formData.date]);
 
-  return alternatives;
-};
+  // Change all API calls to use '/api' instead of '/api/appointments'
+  const fetchBookedSlots = async (date: string) => {
+    setIsLoadingSlots(true);
+    try {
+      const response = await fetch(`/api?date=${date}`);
+      if (!response.ok) throw new Error("Failed to fetch slots");
+      const data = await response.json();
+      setBookedSlots(data.bookedSlots || []);
+    } catch (error) {
+      toast.error("Error checking availability");
+      console.error(error);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
 
-// Recommendation logic
-const [recommendations, setRecommendations] = useState<Recommendation | null>(null);
-const [loadingRecommendations, setLoadingRecommendations] = useState(false);
-const [recommendationError, setRecommendationError] = useState('');
+  // Filter available slots
+  const getAvailableSlots = () => {
+    if (!formData.date) return allTimeSlots;
+    return allTimeSlots.filter((slot) => !bookedSlots.includes(slot));
+  };
 
-// Fetch fresh recommendations on component mount and after bookings
-const fetchRecommendations = async () => {
-  const userEmail = sessionStorage.getItem("userEmail");
-  if (!userEmail) return;
+  const availableSlots = getAvailableSlots();
 
-  setLoadingRecommendations(true);
-  setRecommendationError('');
-  try {
-    const freshRecs = await getFreshRecommendations(userEmail);
-    setRecommendations(freshRecs);
-  } catch (error) {
-    setRecommendationError('Could not load recommendations');
-    console.error("Error fetching recommendations:", error);
-  } finally {
-    setLoadingRecommendations(false);
-  }
-};
+  // Find alternative slots when a slot is booked
+  const findAlternativeSlots = (bookedSlot: string) => {
+    const bookedIndex = allTimeSlots.indexOf(bookedSlot);
+    const alternatives = [];
 
-useEffect(() => {
-  fetchRecommendations();
-}, []);
+    // Check next 3 available slots
+    for (
+      let i = bookedIndex + 1;
+      i < allTimeSlots.length && alternatives.length < 3;
+      i++
+    ) {
+      if (availableSlots.includes(allTimeSlots[i])) {
+        alternatives.push(allTimeSlots[i]);
+      }
+    }
+
+    // If not enough, check previous slots
+    for (let i = bookedIndex - 1; i >= 0 && alternatives.length < 3; i--) {
+      if (availableSlots.includes(allTimeSlots[i])) {
+        alternatives.unshift(allTimeSlots[i]);
+      }
+    }
+
+    return alternatives;
+  };
+
+  // Recommendation logic
+  const [recommendations, setRecommendations] = useState<Recommendation | null>(
+    null
+  );
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [recommendationError, setRecommendationError] = useState("");
+
+  // Fetch fresh recommendations on component mount and after bookings
+  const fetchRecommendations = async () => {
+    const userEmail = sessionStorage.getItem("userEmail");
+    if (!userEmail) return;
+
+    setLoadingRecommendations(true);
+    setRecommendationError("");
+    try {
+      const freshRecs = await getFreshRecommendations(userEmail);
+      setRecommendations(freshRecs);
+    } catch (error) {
+      setRecommendationError("Could not load recommendations");
+      console.error("Error fetching recommendations:", error);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -177,18 +193,6 @@ useEffect(() => {
     }
   };
 
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 8; hour <= 21; hour++) {
-      const period = hour < 12 ? "AM" : "PM";
-      const formattedHour = hour > 12 ? hour - 12 : hour;
-      slots.push(`${formattedHour}:00 ${period}`);
-      slots.push(`${formattedHour}:30 ${period}`);
-    }
-    return slots;
-  };
-
-  const timeSlots = generateTimeSlots();
 
   const handleInputChangeTwo = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -196,18 +200,20 @@ useEffect(() => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-// Check if user is logged in
 
+    // Check if user is logged in
     const userEmail = sessionStorage.getItem("userEmail");
-
     if (!userEmail) {
       toast.error("Please log in to confirm your booking.");
-      router.push("/login"); // Redirect to login page
+      router.push("/login");
       return;
     }
+
     // Validate selections
     if (!selectedVehicle || !selectedPlan || !formData.timeSlot) {
-      setResponseMessage("Please select a vehicle type, pricing plan, and time slot.");
+      setResponseMessage(
+        "Please select a vehicle type, pricing plan, and time slot."
+      );
       toast.error("Please select a vehicle type, pricing plan, and time slot.");
       return;
     }
@@ -218,14 +224,16 @@ useEffect(() => {
       toast.error(
         <div>
           <p>This time slot was just booked by someone else.</p>
-          <p className="font-semibold mt-2">Available slots around this time:</p>
+          <p className="font-semibold mt-2">
+            Available slots around this time:
+          </p>
           <ul className="list-disc pl-5 mt-1">
             {alternatives.map((slot, i) => (
-              <li 
-                key={i} 
+              <li
+                key={i}
                 className="cursor-pointer hover:text-blue-500"
                 onClick={() => {
-                  setFormData(prev => ({ ...prev, timeSlot: slot }));
+                  setFormData((prev) => ({ ...prev, timeSlot: slot }));
                   toast.dismiss();
                 }}
               >
@@ -239,14 +247,9 @@ useEffect(() => {
       return;
     }
 
-      );
-      toast.error("Please select a vehicle type, pricing plan, and time slot.");
-      return;
-    }
-  
     setIsSubmitting(true);
     setResponseMessage("");
-  
+
     try {
       // Submit booking data
       const response = await fetch("/api", {
@@ -256,47 +259,21 @@ useEffect(() => {
         },
         body: JSON.stringify({
           ...formData,
-          email: userEmail, // Include user email in the booking data
+          email: userEmail,
+          vehicleType: selectedVehicle,
+          plan: selectedPlan,
+          extraFeatures: extraFeatures,
         }),
       });
 
-          selectedVehicle,
-          selectedPlan,
-          extraFeatures,
-        }),
-      });
-      if (response.ok) {
-        setResponseMessage("Booking confirmed!");
-        toast.success("Booking confirmed!");
-        setFormData({
-          name: "",
-          phone: "",
-          vehicleMake: "",
-          vehicleName: "",
-          vehicleModel: "",
-          date: "",
-          timeSlot: "",
-          comment: "",
-        });
-        setSelectedVehicle(null);
-        setSelectedPlan(null);
-        setExtraFeatures([]);
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        setResponseMessage(
-          `Error: ${errorData.message || "Unable to confirm booking."}`
-        );
-        toast.error(
-          `Error: ${errorData.message || "Unable to confirm booking."}`
-        );
         throw new Error(errorData.message || "Unable to confirm booking");
       }
 
-      }
-  
       // On successful booking:
       toast.success("Booking confirmed!");
-  
+
       // Refresh recommendations with fresh data from GROQ
       try {
         setLoadingRecommendations(true);
@@ -306,7 +283,7 @@ useEffect(() => {
         console.error("Failed to refresh recommendations:", recError);
         toast.info("Booking confirmed! Could not refresh recommendations.");
       }
-  
+
       // Reset form
       setFormData({
         name: "",
@@ -321,46 +298,51 @@ useEffect(() => {
       setSelectedVehicle(null);
       setSelectedPlan(null);
       setExtraFeatures([]);
-  
+
       // Refresh booked slots if date was selected
       if (formData.date) {
         await fetchBookedSlots(formData.date);
       }
-  
     } catch (error) {
       console.error("Booking error:", error);
-      setResponseMessage("Error occurred while submitting the form.");
-      toast.error(error instanceof Error ? error.message : "Error occurred while submitting the form.");
-
+      setResponseMessage(
+        error instanceof Error
+          ? error.message
+          : "Error occurred while submitting the form."
+      );
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Error occurred while submitting the form."
+      );
     } finally {
       setIsSubmitting(false);
       setLoadingRecommendations(false);
     }
   };
 
-
-
-
   const applyRecommendation = () => {
     if (!recommendations || !selectedVehicle) return;
-  
+
     // Convert recommendation to actual prices
     const prices = pricingOptions[selectedVehicle].prices;
     let priceToSelect = prices[1]; // Default to Full Wash
-  
+
     if (recommendations.recommendedPlan.includes("General") && prices[2]) {
       priceToSelect = prices[2];
     } else if (recommendations.recommendedPlan.includes("Basic") && prices[0]) {
       priceToSelect = prices[0];
     }
-  
+
     setSelectedPlan(priceToSelect.toString());
     setExtraFeatures(recommendations.recommendedFeatures);
-    
-    toast.success(`Applied: ${recommendations.recommendedPlan} with ${recommendations.recommendedFeatures.join(', ')}`);
+
+    toast.success(
+      `Applied: ${
+        recommendations.recommendedPlan
+      } with ${recommendations.recommendedFeatures.join(", ")}`
+    );
   };
-
-
 
   return (
     <div className="py-8 px-4 md:px-16">
@@ -536,49 +518,42 @@ useEffect(() => {
             className="p-2 border rounded-md w-full text-sm md:text-base"
           />
 
+          {/* Replace the existing recommendations section */}
+          <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <h2 className="text-xl font-bold mb-2">Recommended For You</h2>
 
-
-
-
-{/* Replace the existing recommendations section */}
-<div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
-  <h2 className="text-xl font-bold mb-2">Recommended For You</h2>
-  
-  {loadingRecommendations ? (
-    <p>Analyzing your booking history...</p>
-  ) : recommendationError ? (
-    <p className="text-red-500">{recommendationError}</p>
-  ) : recommendations ? (
-    <>
-      <p className="mb-3">{recommendations.explanation}</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-        <div>
-          <h3 className="font-semibold">Recommended Plan:</h3>
-          <p>{recommendations.recommendedPlan}</p>
-        </div>
-        <div>
-          <h3 className="font-semibold">Recommended Features:</h3>
-          <ul className="list-disc pl-5">
-            {recommendations.recommendedFeatures.map((feature, i) => (
-              <li key={i}>{feature}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <button
-        onClick={applyRecommendation}
-        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-      >
-        Apply Recommendations
-      </button>
-    </>
-  ) : (
-    <p>No recommendations available</p>
-  )}
-</div>
-
-
-
+            {loadingRecommendations ? (
+              <p>Analyzing your booking history...</p>
+            ) : recommendationError ? (
+              <p className="text-red-500">{recommendationError}</p>
+            ) : recommendations ? (
+              <>
+                <p className="mb-3">{recommendations.explanation}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <h3 className="font-semibold">Recommended Plan:</h3>
+                    <p>{recommendations.recommendedPlan}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Recommended Features:</h3>
+                    <ul className="list-disc pl-5">
+                      {recommendations.recommendedFeatures.map((feature, i) => (
+                        <li key={i}>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <button
+                  onClick={applyRecommendation}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Apply Recommendations
+                </button>
+              </>
+            ) : (
+              <p>No recommendations available</p>
+            )}
+          </div>
 
           <button
             type="submit"
