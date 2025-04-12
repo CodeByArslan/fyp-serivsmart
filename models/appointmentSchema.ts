@@ -84,3 +84,5 @@ const appointmentSchema = new Schema<Appointment>({
 const AppointmentModel = mongoose.model<Appointment>("Appointment", appointmentSchema);
 
 export default AppointmentModel;
+
+

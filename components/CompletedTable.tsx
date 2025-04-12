@@ -1,44 +1,91 @@
 const CompletedTable = ({ completedAppointments }) => {
-    return (
-      <table className="min-w-full bg-white border border-gray-300">
-        <thead>
-          <tr>
-            <th className="py-2 px-4 border-b">Name</th>
-            <th className="py-2 px-4 border-b">Phone</th>
-            <th className="py-2 px-4 border-b">Vehicle Make</th>
-            <th className="py-2 px-4 border-b">Vehicle Name</th>
-            <th className="py-2 px-4 border-b">Vehicle Model</th>
-            <th className="py-2 px-4 border-b">Date</th>
-            <th className="py-2 px-4 border-b">Time Slot</th>
-            <th className="py-2 px-4 border-b">Comment</th>
-            <th className="py-2 px-4 border-b">Email</th>
-            <th className="py-2 px-4 border-b">Selected Vehicle</th>
-            <th className="py-2 px-4 border-b">Selected Plan</th>
-            <th className="py-2 px-4 border-b">Extra Features</th>
-            <th className="py-2 px-4 border-b">Engine Wash</th>
-          </tr>
-        </thead>
-        <tbody>
-          {completedAppointments.map((appointment) => (
-            <tr key={appointment.id}>
-              <td className="py-2 px-4 border-b">{appointment.name}</td>
-              <td className="py-2 px-4 border-b">{appointment.phone}</td>
-              <td className="py-2 px-4 border-b">{appointment.vehicleMake}</td>
-              <td className="py-2 px-4 border-b">{appointment.vehicleName}</td>
-              <td className="py-2 px-4 border-b">{appointment.vehicleModel}</td>
-              <td className="py-2 px-4 border-b">{appointment.date}</td>
-              <td className="py-2 px-4 border-b">{appointment.timeSlot}</td>
-              <td className="py-2 px-4 border-b">{appointment.comment}</td>
-              <td className="py-2 px-4 border-b">{appointment.email}</td>
-              <td className="py-2 px-4 border-b">{appointment.selectedVehicle}</td>
-              <td className="py-2 px-4 border-b">{appointment.selectedPlan}</td>
-              <td className="py-2 px-4 border-b">{appointment.extraFeatures}</td>
-              <td className="py-2 px-4 border-b">{appointment.engineWash ? 'Yes' : 'No'}</td>
+  return (
+    <div className="p-4">
+      <div className="overflow-x-auto rounded-lg shadow-lg">
+        <table className="min-w-full bg-white">
+          <thead className="bg-gradient-to-r from-blue-500 to-blue-600">
+            <tr>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Name
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Phone
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Vehicle Make
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Vehicle Name
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Vehicle Model
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Date
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Time Slot
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Comment
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Email
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Selected Vehicle
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Selected Plan
+              </th>
+              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+                Extra Features
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  };
-  
-  export default CompletedTable;
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {completedAppointments.map((appointment) => (
+              <tr
+                key={appointment._id}
+                className="hover:bg-gray-50 transition-colors"
+              >
+                <td className="py-4 px-6 text-gray-700">{appointment.name}</td>
+                <td className="py-4 px-6 text-gray-700">{appointment.phone}</td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.vehicleMake}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.vehicleName}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.vehicleModel}
+                </td>
+                <td className="py-4 px-6 text-gray-700">{appointment.date}</td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.timeSlot}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.comment}
+                </td>
+                <td className="py-4 px-6 text-gray-700">{appointment.email}</td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.selectedVehicle}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.selectedPlan}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {Array.isArray(appointment.extraFeatures) 
+                    ? appointment.extraFeatures.join(", ") 
+                    : appointment.extraFeatures}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default CompletedTable;
