@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 
-const uri = "mongodb+srv://rajputarslan693:fypappointmentdata@appointmentscluster.yyhmq.mongodb.net/";
+const uri = "mongodb+srv://alihassan:87654321@cluster0.okm6n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
