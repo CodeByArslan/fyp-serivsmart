@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import User from "@/models/userSchema"; // Import User model
-import bcrypt from "bcrypt"; // For password hashing (if needed)
+import bcrypt from "bcryptjs"; // For password hashing (if needed)
 
 // MongoDB Connection Function (Call only once in the app)
 const connectDB = async () => {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import User from "@/models/userSchema"; // Import User model
 
 // MongoDB Connection String (Replace with your actual connection string)
