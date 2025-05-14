@@ -78,6 +78,7 @@ const AdminDashboard = () => {
       )
     );
   };
+  
 
   const handleMarkAsDone = async (id) => {
     const appointment = appointments.find((app) => app.id === id);
