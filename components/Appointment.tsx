@@ -1,20 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import heroImage from "../public/images/appointment_hero.png"; // Adjust path if necessary
+import heroImage from "../public/images/appointment_hero.png"; 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
-import { getFreshRecommendations } from "../services/recommendationService"; // Adjust path
+import { getFreshRecommendations } from "../services/recommendationService";
 
-// Define Recommendation type if not already defined elsewhere
+
 interface Recommendation {
   explanation: string;
   recommendedPlan: string;
   recommendedFeatures: string[];
 }
 
-// Define Appointment type (to match your API response and data structure)
 interface AppointmentData {
   _id: string;
   name: string;
@@ -51,15 +50,12 @@ const AppointmentPage = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [responseMessage, setResponseMessage] = useState(""); // Kept for potential future use
 
-  // --- States for Waiting Time & Slot Management ---
   const [appointmentsForSelectedDate, setAppointmentsForSelectedDate] =
     useState<AppointmentData[]>([]);
   const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]); // Only the time strings
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [waitingTimeMessage, setWaitingTimeMessage] = useState<string>("");
-  // --- End States ---
 
   const pricingOptions: Record<string, { prices: number[]; times: string[] }> =
     {
@@ -97,19 +93,19 @@ const AppointmentPage = () => {
       if (displayHour === 0) displayHour = 12;
       slots.push(`${displayHour}:00 ${period}`);
       if (hour < 20) {
-        // To avoid 8:30 PM if 8:00 PM is the last slot
+        
         slots.push(`${displayHour}:30 ${period}`);
       }
     }
-    return slots.filter((slot) => slot !== "8:30 PM"); // Or adjust loop condition `hour < 20` for :30 slots
+    return slots.filter((slot) => slot !== "8:30 PM");
   };
   const allTimeSlots = generateTimeSlots();
 
-  // --- Helper Functions for Waiting Time ---
+
   const timeStringToMinutes = (timeStr: string): number => {
     if (!timeStr || !timeStr.includes(":") || !timeStr.includes(" ")) {
       console.warn("Invalid time string for timeStringToMinutes:", timeStr);
-      return NaN; // Return NaN for invalid inputs to make checks easier
+      return NaN; 
     }
     const [time, modifier] = timeStr.split(" ");
     let [hours, minutesStr] = time.split(":");
@@ -138,7 +134,7 @@ const AppointmentPage = () => {
     }
     return totalMinutes;
   };
-  // --- End Helper Functions ---
+
 
   // Fetch appointments for the selected date
   const fetchAppointmentsForDate = async (date: string) => {
@@ -151,7 +147,7 @@ const AppointmentPage = () => {
     setIsLoadingSlots(true);
     setWaitingTimeMessage("");
     try {
-      const response = await fetch(`/api?date=${date}`); // API GET now filters by date
+      const response = await fetch(`/api?date=${date}`); 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
@@ -213,9 +209,6 @@ const AppointmentPage = () => {
     let totalPriorServiceMinutes = 0;
     const priorActiveAppointments = appointmentsForSelectedDate
       .filter((app) => {
-        // Explicitly check if isCompleted is false.
-        // If isCompleted is undefined, treat it as active for now,
-        // but ideally, all documents should have this field.
         const isActive =
           app.isCompleted === false || typeof app.isCompleted === "undefined";
         return (
@@ -572,7 +565,7 @@ const AppointmentPage = () => {
                     ? "Full Wash"
                     : "General Wash"}
                 </h3>
-                <p className="text-lg font-bold">₹{price}</p>
+                <p className="text-lg font-bold">PKr/- {price}</p>
                 <p className="text-sm text-gray-500">
                   {pricingOptions[selectedVehicle].times[index]}
                 </p>

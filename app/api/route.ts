@@ -1,16 +1,14 @@
-// src/app/api/route.ts
-import { NextRequest, NextResponse } from "next/server"; // Ensure NextRequest is imported
+import { NextRequest, NextResponse } from "next/server"; 
 import { MongoClient, ObjectId, FindOptions, Document } from "mongodb";
-// import { POST as loginPOST } from "./auth/login/route"; // Still potentially problematic here
-// import AppointmentModel from "@/models/appointmentSchema"; // Unused
 
-// MongoDB URI
+
+
 const uri =
   process.env.MONGODB_URI ||
   "mongodb+srv://alihassan:87654321@cluster0.okm6n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-// --- !!! IMPORTANT FIX: DEFINE dbName HERE !!! ---
-const dbName = process.env.MONGODB_DB_NAME || "YOUR_ACTUAL_DATABASE_NAME"; // <<<<< REPLACE THIS WITH YOUR DB NAME if not using env var
+
+const dbName = process.env.MONGODB_DB_NAME ;
 
 if (!uri) {
   throw new Error(
@@ -31,20 +29,13 @@ export async function POST(req: NextRequest) {
   // Use NextRequest
   const url = new URL(req.url);
 
-  // Check if request is for login or appointment
-  // This routing logic is unusual for a single /api/route.ts file.
-  // Typically, /api/auth/login would have its own route.ts file.
-  // For now, I'll keep it as you had it, but it's a point for refactoring.
+
   if (url.pathname === "/api/auth/login") {
-    // Assuming loginPOST is correctly imported and works
-    // Make sure loginPOST is also adapted to use NextRequest if needed
-    // return loginPOST(req as any); // Might need casting if loginPOST expects vanilla Request
+
     console.warn(
       "Login route accessed via general /api POST. Consider separate routing."
     );
-    // Fall through to appointment creation if loginPOST is not defined or not intended here.
-    // If loginPOST is defined and expected, you'd return its result.
-    // For now, let's assume this POST is primarily for appointments if not login.
+
   }
 
   const client = new MongoClient(uri);
@@ -91,10 +82,10 @@ export async function GET(request: NextRequest) {
 
   try {
     await client.connect();
-    const database = client.db(dbName); // dbName is now defined
+    const database = client.db(dbName); 
     const collection = database.collection("appointments");
 
-    const { searchParams } = request.nextUrl; // Correct way to get searchParams from NextRequest
+    const { searchParams } = request.nextUrl; 
     const date = searchParams.get("date");
 
     let query: Document = {};

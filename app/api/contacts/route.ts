@@ -66,3 +66,40 @@ export async function GET() {
     );
   }
 }
+
+
+// DELETE handler for deleting a contact message by ID
+export async function DELETE(req) {
+  await connectDB(); // Ensure DB is connected
+
+  try {
+    const { id } = await req.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Contact ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const deletedContact = await ContactModel.findByIdAndDelete(id);
+
+    if (!deletedContact) {
+      return NextResponse.json(
+        { message: "Contact not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Contact deleted successfully", id: deletedContact._id },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting contact:", error);
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}

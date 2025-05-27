@@ -13,7 +13,7 @@ const Reviews = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await fetch("/api"); // Update with actual API endpoint
+        const response = await fetch("/api"); 
         const data = await response.json();
 
         const userEmail = sessionStorage.getItem("userEmail");
@@ -34,7 +34,7 @@ const Reviews = () => {
 
   const handleEditClick = (appointment) => {
     setSelectedAppointment(appointment);
-    setReviewText(""); // Ensure the textarea is always empty when modal opens
+    setReviewText(""); 
     setIsModalOpen(true);
   };
   

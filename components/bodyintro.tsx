@@ -12,10 +12,10 @@ const BodySection = () => {
             Get to Know Us
           </h4>
           <h1 className="text-[#173049] text-3xl font-bold mb-4">
-            Welcome to Crsine Car Wash Center
+            Welcome to ServiSmart Car Wash Center
           </h1>
           <p className="text-orange-500 text-lg font-semibold mb-4">
-            We have 30+ years of experiences for give you better quality results.
+            We have alot of talented people who are working with us.
           </p>
           <p className="text-gray-600 mb-6">
             There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even you are going to use a passage.

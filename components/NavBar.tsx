@@ -9,13 +9,12 @@ const Navbar = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Initial fetch of userEmail from sessionStorage
     setUserEmail(sessionStorage.getItem("userEmail"));
   }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem("userEmail");
-    setUserEmail(null); // Update state to reflect logout
+    setUserEmail(null); 
   };
 
   const getLinkClass = (path: string) =>
@@ -57,7 +56,7 @@ const Navbar = () => {
           <Link href="/services" className={getLinkClass("/services")}>
             Services
           </Link>
-          <Link href="/shop" className={getLinkClass("/shop")}>Shop</Link>
+          <Link href="http://localhost:3000/" className={getLinkClass("/shop")}>Shop</Link>
           <Link href="/contact" className={getLinkClass("/news")}>Contact Us</Link>
           <Link href="/reviews" className={getLinkClass("/reviews")}>Reviews</Link>
         </div>
