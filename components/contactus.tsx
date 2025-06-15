@@ -207,42 +207,7 @@ const ContactUs = () => {
         </div>
       </div>
 
-      {/* --- MESSAGES LIST (for admin/debug/testing) --- */}
-      <div className="max-w-4xl mx-auto mt-16 bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-2xl font-bold mb-4 text-center">
-          Submitted Messages
-        </h3>
-        {contacts.length === 0 ? (
-          <p className="text-gray-500 text-center">No messages found.</p>
-        ) : (
-          contacts.map((msg) => (
-            <div
-              key={msg._id}
-              className="border p-4 rounded-md mb-4 relative bg-gray-50"
-            >
-              <p>
-                <strong>Name:</strong> {msg.name}
-              </p>
-              <p>
-                <strong>Email:</strong> {msg.email}
-              </p>
-              <p>
-                <strong>Phone:</strong> {msg.phone || "N/A"}
-              </p>
-              <p>
-                <strong>Message:</strong> {msg.message}
-              </p>
-              <button
-                onClick={() => handleDelete(msg._id)}
-                className="absolute top-3 right-3 text-red-600 hover:text-red-800"
-                title="Delete"
-              >
-                <FaTrash />
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+
     </div>
   );
 };
