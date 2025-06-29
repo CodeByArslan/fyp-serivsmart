@@ -14,6 +14,7 @@ export interface Appointment extends Document {
   selectedPlan: string | null;
   extraFeatures: string[];
   status: string;
+  isCompleted: boolean; // Added Completed Status
 }
 
 // Mongoose Schema for the Appointment model
@@ -73,9 +74,15 @@ const appointmentSchema = new Schema<Appointment>({
     type: String,
     default: null,
   },
+  isCompleted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Create the Mongoose model from the schema
 const AppointmentModel = mongoose.model<Appointment>("Appointment", appointmentSchema);
 
 export default AppointmentModel;
+
+

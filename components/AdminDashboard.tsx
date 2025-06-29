@@ -48,10 +48,16 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchCompletedAppointments = async () => {
       try {
-        const response = await fetch("/api/completedAppointments");
+        const response = await fetch("/api");
         if (response.ok) {
           const data = await response.json();
-          setCompletedAppointments(data);
+
+          // Filter for completed appointments only
+          const completed = data.filter(
+            (appointment) => appointment.isCompleted === true
+          );
+
+          setCompletedAppointments(completed);
         }
       } catch (error) {
         console.error("Error fetching completed appointments:", error);
@@ -72,6 +78,7 @@ const AdminDashboard = () => {
       )
     );
   };
+  
 
   const handleMarkAsDone = async (id) => {
     const appointment = appointments.find((app) => app.id === id);
@@ -160,28 +167,24 @@ const AdminDashboard = () => {
 
       <div className="mb-12">
         <h2 className="text-xl font-semibold mb-4">Appointments</h2>
-        <AppointmentsTable
-          appointments={appointments}
-          onMarkAsDone={handleMarkAsDone}
-          onDelete={handleDeleteAppointment}
-        />
+        <AppointmentsTable appointments={appointments} />
       </div>
 
       <div className="mb-12">
         <h2 className="text-xl font-semibold mb-4">Reviews</h2>
         <ReviewsTable
-          // appointments={appointments}
-          // onMarkAsDone={handleMarkAsDone}
-          // onDelete={handleDeleteAppointment}
+        // appointments={appointments}
+        // onMarkAsDone={handleMarkAsDone}
+        // onDelete={handleDeleteAppointment}
         />
       </div>
 
       <div className="mb-12">
         <h2 className="text-xl font-semibold mb-4">Contact</h2>
         <ContactTable
-          // appointments={appointments}
-          // onMarkAsDone={handleMarkAsDone}
-          // onDelete={handleDeleteAppointment}
+        // appointments={appointments}
+        // onMarkAsDone={handleMarkAsDone}
+        // onDelete={handleDeleteAppointment}
         />
       </div>
 

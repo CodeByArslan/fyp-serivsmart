@@ -1,80 +1,74 @@
-import { NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { NextRequest, NextResponse } from "next/server"; 
+import { MongoClient, ObjectId, FindOptions, Document } from "mongodb";
 
-const uri = "mongodb+srv://rajputarslan693:fypappointmentdata@appointmentscluster.yyhmq.mongodb.net/";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const date = searchParams.get('date');
 
-  if (!date) {
-    return NextResponse.json(
-      { message: 'Date parameter is required' },
-      { status: 400 }
-    );
-  }
+const uri =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://alihassan:87654321@cluster0.okm6n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-  const client = new MongoClient(uri);
 
-  try {
-    await client.connect();
-    const database = client.db();
-    const collection = database.collection("appointment");
+const dbName = process.env.MONGODB_DB_NAME ;
 
-    const appointments = await collection.find({ date }).toArray();
-    const bookedSlots = appointments.map(app => app.timeSlot);
-
-    return NextResponse.json({ 
-      success: true,
-      date,
-      bookedSlots
-    });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { success: false, message: 'Error fetching appointments' },
-      { status: 500 }
-    );
-  } finally {
-    await client.close();
-  }
+if (!uri) {
+  throw new Error(
+    "MongoDB URI is not defined in environment variables or code."
+  );
 }
 
-export async function POST(request: Request) {
+if (dbName === "YOUR_ACTUAL_DATABASE_NAME" && !process.env.MONGODB_DB_NAME) {
+  console.warn(
+    "WARNING: MONGODB_DB_NAME is not set in environment variables. " +
+      "Using a placeholder. PLEASE REPLACE 'YOUR_ACTUAL_DATABASE_NAME' in src/app/api/route.ts " +
+      "with your actual database name or set the MONGODB_DB_NAME environment variable."
+  );
+}
+
+// POST handler for appointment creation
+export async function POST(req: NextRequest) {
+  // Use NextRequest
+  const url = new URL(req.url);
+
+
+  if (url.pathname === "/api/auth/login") {
+
+    console.warn(
+      "Login route accessed via general /api POST. Consider separate routing."
+    );
+
+  }
+
   const client = new MongoClient(uri);
-  const body = await request.json();
-
   try {
+    const body = await req.json();
     await client.connect();
-    const database = client.db();
-    const collection = database.collection("appointment");
+    const database = client.db(dbName); // dbName is now defined
+    const collection = database.collection("appointments");
 
-    // Check if slot is already booked
-    const existing = await collection.findOne({
-      date: body.date,
-      timeSlot: body.timeSlot
-    });
+    // Add default fields for new appointments
+    const newAppointmentData = {
+      ...body,
+      isCompleted: false,
+      createdAt: new Date(),
+    };
 
-    if (existing) {
-      return NextResponse.json(
-        { 
-          success: false,
-          message: 'This time slot is already booked',
-          suggestedSlots: await getSuggestedSlots(body.date, body.timeSlot)
-        },
-        { status: 409 }
-      );
-    }
+    const result = await collection.insertOne(newAppointmentData);
 
-    const result = await collection.insertOne(body);
+    const createdAppointment = {
+      ...newAppointmentData,
+      _id: result.insertedId.toString(), // Ensure _id is string
+    };
+
     return NextResponse.json(
-      { success: true, insertedId: result.insertedId },
+      { message: "Appointment created", appointment: createdAppointment },
       { status: 201 }
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error creating appointment:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error during POST";
     return NextResponse.json(
-      { success: false, message: 'Error creating appointment' },
+      { message: "Error creating appointment", error: errorMessage },
       { status: 500 }
     );
   } finally {
@@ -82,39 +76,96 @@ export async function POST(request: Request) {
   }
 }
 
-async function getSuggestedSlots(date: string, bookedSlot: string) {
+export async function GET(request: NextRequest) {
+  // Use NextRequest
   const client = new MongoClient(uri);
+
   try {
     await client.connect();
-    const database = client.db();
-    const collection = database.collection("appointment");
+    const database = client.db(dbName); 
+    const collection = database.collection("appointments");
 
-    const bookedSlots = (await collection.find({ date }).toArray())
-      .map(app => app.timeSlot);
+    const { searchParams } = request.nextUrl; 
+    const date = searchParams.get("date");
 
-    const allSlots = [];
-    for (let hour = 8; hour <= 20; hour++) {
-      const period = hour < 12 ? 'AM' : 'PM';
-      const displayHour = hour > 12 ? hour - 12 : hour;
-      allSlots.push(`${displayHour}:00 ${period}`, `${displayHour}:30 ${period}`);
+    let query: Document = {};
+    if (date) {
+      query = { date: date };
     }
 
-    const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
-    const bookedIndex = allSlots.indexOf(bookedSlot);
-    const suggestions = [];
+    const appointmentsFromDB = await collection.find(query).toArray();
+    const appointments = appointmentsFromDB.map((app) => ({
+      ...app,
+      _id: app._id.toString(), // Ensure _id is string
+    }));
 
-    for (let i = bookedIndex + 1; i < allSlots.length && suggestions.length < 3; i++) {
-      if (availableSlots.includes(allSlots[i])) {
-        suggestions.push(allSlots[i]);
-      }
+    return NextResponse.json(appointments, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching appointments (GET):", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error during GET";
+    return NextResponse.json(
+      { message: "Error fetching appointments", error: errorMessage },
+      { status: 500 }
+    );
+  } finally {
+    await client.close();
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  // Use NextRequest
+  const client = new MongoClient(uri);
+
+  try {
+    const { id } = await req.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Appointment ID is required" },
+        { status: 400 }
+      );
     }
-    for (let i = bookedIndex - 1; i >= 0 && suggestions.length < 3; i--) {
-      if (availableSlots.includes(allSlots[i])) {
-        suggestions.unshift(allSlots[i]);
-      }
+    if (typeof id !== "string" || !ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { message: "Invalid Appointment ID format" },
+        { status: 400 }
+      );
     }
 
-    return suggestions;
+    await client.connect();
+    const database = client.db(dbName); // dbName is now defined
+    const collection = database.collection("appointments");
+
+    const objectId = new ObjectId(id);
+
+    const result = await collection.updateOne(
+      { _id: objectId },
+      { $set: { isCompleted: true, updatedAt: new Date() } } // Added updatedAt
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { message: "Appointment not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        message: "Appointment marked as completed successfully",
+        modifiedCount: result.modifiedCount,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating appointment (PATCH):", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error during PATCH";
+    return NextResponse.json(
+      { message: "Error updating appointment", error: errorMessage },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }

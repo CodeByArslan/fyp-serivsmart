@@ -10,13 +10,12 @@ const Login = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [user, setUser ] = useState(null); // State to store user info
+  const [user, setUser ] = useState(null);
 
-  // Check if user is already logged in
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("userEmail");
     if (storedEmail) {
-      setUser({ email: storedEmail }); // Store only email in state
+      setUser({ email: storedEmail }); 
     }
   }, []);
   

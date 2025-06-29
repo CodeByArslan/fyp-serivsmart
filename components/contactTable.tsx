@@ -46,9 +46,9 @@ const ContactTable = () => {
               <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
                 Message
               </th>
-              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
+              {/* <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
                 Actions
-              </th>
+              </th> */}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -61,11 +61,11 @@ const ContactTable = () => {
                 <td className="py-4 px-6 text-gray-700">{contact.email}</td>
                 <td className="py-4 px-6 text-gray-700">{contact.phone}</td>
                 <td className="py-4 px-6 text-gray-700">{contact.message}</td>
-                <td className="py-4 px-6 space-x-2">
+                {/* <td className="py-4 px-6 space-x-2">
                   <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition-all">
                     Delete
                   </button>
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 const AppointmentsTable = () => {
   const [appointments, setAppointments] = useState([]);
@@ -11,7 +12,12 @@ const AppointmentsTable = () => {
       try {
         const response = await fetch("/api"); // Update with actual API endpoint
         const data = await response.json();
-        setAppointments(data);
+
+        const completed = data.filter(
+          (appointment) => appointment.isCompleted !== true
+        );
+
+        setAppointments(completed);
       } catch (error) {
         console.error("Error fetching appointments:", error);
       }
@@ -20,13 +26,41 @@ const AppointmentsTable = () => {
     fetchAppointments();
   }, []);
 
+  const handleMarkAsDone = async (id) => {
+    try {
+      const response = await fetch("/api", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Appointment marked as done successfully!");
+        // Refresh the appointments list
+        const refreshResponse = await fetch("/api");
+        const newData = await refreshResponse.json();
+        setAppointments(newData);
+      } else {
+        const resData = await response.json();
+        toast.error(resData.message || "Failed to mark appointment as done.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("An error occurred while marking the appointment as done.");
+    }
+  };
+
   // Calculate total pages
   const totalPages = Math.ceil(appointments.length / recordsPerPage);
 
   // Get records for the current page
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = appointments.slice(indexOfFirstRecord, indexOfLastRecord);
+  const currentRecords = appointments.slice(
+    indexOfFirstRecord,
+    indexOfLastRecord
+  );
 
   return (
     <div className="p-4">
@@ -71,9 +105,6 @@ const AppointmentsTable = () => {
                 Extra Features
               </th>
               <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
-                Engine Wash
-              </th>
-              <th className="py-3 px-6 text-left text-white font-semibold uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -86,23 +117,38 @@ const AppointmentsTable = () => {
               >
                 <td className="py-4 px-6 text-gray-700">{appointment.name}</td>
                 <td className="py-4 px-6 text-gray-700">{appointment.phone}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.vehicleMake}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.vehicleName}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.vehicleModel}</td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.vehicleMake}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.vehicleName}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.vehicleModel}
+                </td>
                 <td className="py-4 px-6 text-gray-700">{appointment.date}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.slot}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.comment}</td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.timeSlot}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.comment}
+                </td>
                 <td className="py-4 px-6 text-gray-700">{appointment.email}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.selectedVehicle}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.selectedPlan}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.extraFeatures?.join(", ")}</td>
-                <td className="py-4 px-6 text-gray-700">{appointment.engineWash ? "Yes" : "No"}</td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.selectedVehicle}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.selectedPlan}
+                </td>
+                <td className="py-4 px-6 text-gray-700">
+                  {appointment.extraFeatures?.join(", ")}
+                </td>
                 <td className="py-4 px-6 space-x-2">
-                  <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all">
+                  <button
+                    onClick={() => handleMarkAsDone(appointment._id)} // 🔥 add this line
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition-all"
+                  >
                     Done
-                  </button>
-                  <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition-all">
-                    Delete
                   </button>
                 </td>
               </tr>
